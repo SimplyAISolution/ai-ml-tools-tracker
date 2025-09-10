@@ -1,0 +1,120 @@
+{
+  "summary": {
+    "total_repositories": 5,
+    "total_stars": 10100,
+    "average_stars": 2020.0,
+    "recently_active": 0,
+    "unique_languages": 2,
+    "unique_topics": 21
+  },
+  "languages": {
+    "Python": 4,
+    "Scala": 1
+  },
+  "topics": {
+    "machine-learning": 1,
+    "computer-vision": 1,
+    "pytorch": 1,
+    "deep-learning": 1,
+    "nlp": 1,
+    "transformers": 1,
+    "bert": 1,
+    "gpt": 1,
+    "natural-language-processing": 1,
+    "stable-diffusion": 1,
+    "image-generation": 1,
+    "ai-art": 1,
+    "generative-ai": 1,
+    "data-science": 1,
+    "apache-spark": 1
+  },
+  "star_statistics": {
+    "total": 10100,
+    "average": 2020.0,
+    "median": 1800,
+    "max": 3200,
+    "min": 950
+  },
+  "owner_types": {
+    "User": 2,
+    "Organization": 3
+  },
+  "licenses": {
+    "MIT": 3,
+    "Apache-2.0": 2
+  },
+  "top_repositories": [
+    {
+      "name": "ai-image-generator",
+      "full_name": "creative-ai/ai-image-generator",
+      "description": "State-of-the-art AI image generation using diffusion models",
+      "html_url": "https://github.com/creative-ai/ai-image-generator",
+      "stars": 3200,
+      "language": "Python",
+      "topics": [
+        "stable-diffusion",
+        "image-generation",
+        "ai-art",
+        "generative-ai"
+      ]
+    },
+    {
+      "name": "awesome-ml-project",
+      "full_name": "ai-researcher/awesome-ml-project",
+      "description": "A comprehensive machine learning framework for computer vision tasks",
+      "html_url": "https://github.com/ai-researcher/awesome-ml-project",
+      "stars": 2500,
+      "language": "Python",
+      "topics": [
+        "machine-learning",
+        "computer-vision",
+        "pytorch",
+        "deep-learning"
+      ]
+    },
+    {
+      "name": "nlp-transformer-toolkit",
+      "full_name": "nlp-org/nlp-transformer-toolkit",
+      "description": "Advanced natural language processing toolkit with transformer models",
+      "html_url": "https://github.com/nlp-org/nlp-transformer-toolkit",
+      "stars": 1800,
+      "language": "Python",
+      "topics": [
+        "nlp",
+        "transformers",
+        "bert",
+        "gpt",
+        "natural-language-processing"
+      ]
+    },
+    {
+      "name": "reinforcement-learning-gym",
+      "full_name": "rl-research/reinforcement-learning-gym",
+      "description": "Comprehensive reinforcement learning environment and algorithms",
+      "html_url": "https://github.com/rl-research/reinforcement-learning-gym",
+      "stars": 1650,
+      "language": "Python",
+      "topics": [
+        "reinforcement-learning",
+        "openai-gym",
+        "deep-q-learning",
+        "policy-gradient"
+      ]
+    },
+    {
+      "name": "ml-data-pipeline",
+      "full_name": "data-team/ml-data-pipeline",
+      "description": "Scalable machine learning data processing pipeline with Apache Spark",
+      "html_url": "https://github.com/data-team/ml-data-pipeline",
+      "stars": 950,
+      "language": "Scala",
+      "topics": [
+        "data-science",
+        "apache-spark",
+        "ml-pipeline",
+        "big-data"
+      ]
+    }
+  ],
+  "generated_at": "2025-09-10T21:49:00.795361Z"
+}
