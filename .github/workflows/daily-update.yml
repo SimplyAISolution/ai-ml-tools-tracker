@@ -1,0 +1,172 @@
+name: Daily AI/ML Tools Update
+
+on:
+  schedule:
+    # Run daily at 08:00 UTC (adjust as needed)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+    inputs:
+      days_back:
+        description: 'Number of days to look back for trending repos'
+        required: false
+        default: '7'
+        type: string
+      max_repos:
+        description: 'Maximum number of repositories to collect'
+        required: false
+        default: '100'
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create data directories
+      run: |
+        mkdir -p data/tools data/metadata
+    
+    - name: Run GitHub scraper
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        cd scripts
+        python -m github_scraper \
+          --days ${{ github.event.inputs.days_back || '7' }} \
+          --max-repos ${{ github.event.inputs.max_repos || '100' }}
+    
+    - name: Process data and generate analysis
+      run: |
+        cd scripts
+        python -m data_processor
+    
+    - name: Check for changes
+      id: git-check
+      run: |
+        git diff --quiet data/ || echo "changes=true" >> $GITHUB_OUTPUT
+    
+    - name: Commit and push changes
+      if: steps.git-check.outputs.changes == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add data/
+        
+        # Create commit message with summary
+        REPO_COUNT=$(jq '.metadata.total_repos // 0' data/tools/trending_repos.json)
+        TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
+        
+        git commit -m "🤖 Daily update: ${REPO_COUNT} AI/ML repositories (${TIMESTAMP})" \
+                   -m "Automated data collection and analysis update" \
+                   -m "- Updated trending repositories" \
+                   -m "- Generated fresh analysis report" \
+                   -m "- Collected data for last ${{ github.event.inputs.days_back || '7' }} days"
+        
+        git push
+    
+    - name: Create summary
+      if: always()
+      run: |
+        echo "## 🤖 AI/ML Tools Update Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ -f "data/tools/trending_repos.json" ]]; then
+          REPO_COUNT=$(jq '.metadata.total_repos // 0' data/tools/trending_repos.json)
+          TIMESTAMP=$(jq -r '.metadata.generated_at // "Unknown"' data/tools/trending_repos.json)
+          
+          echo "✅ **Successfully collected ${REPO_COUNT} repositories**" >> $GITHUB_STEP_SUMMARY
+          echo "📅 **Generated at**: ${TIMESTAMP}" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Search period**: Last ${{ github.event.inputs.days_back || '7' }} days" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add top languages if analysis exists
+          if [[ -f "data/tools/analysis.json" ]]; then
+            echo "### 📊 Quick Statistics" >> $GITHUB_STEP_SUMMARY
+            TOTAL_STARS=$(jq '.summary.total_stars // 0' data/tools/analysis.json)
+            AVG_STARS=$(jq '.summary.average_stars // 0' data/tools/analysis.json)
+            UNIQUE_LANGS=$(jq '.summary.unique_languages // 0' data/tools/analysis.json)
+            
+            echo "- **Total Stars**: ${TOTAL_STARS}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Average Stars**: ${AVG_STARS}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Languages**: ${UNIQUE_LANGS}" >> $GITHUB_STEP_SUMMARY
+          fi
+        else
+          echo "❌ **No data collected** - Check logs for errors" >> $GITHUB_STEP_SUMMARY
+        fi
+    
+    - name: Upload artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ai-ml-data-${{ github.run_number }}
+        path: |
+          data/tools/
+          data/metadata/
+        retention-days: 30
+
+  notification:
+    needs: update-data
+    runs-on: ubuntu-latest
+    if: failure()
+    
+    steps:
+    - name: Create issue on failure
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const title = `🚨 Daily AI/ML Tools Update Failed - ${new Date().toISOString().split('T')[0]}`;
+          const body = `
+          The daily AI/ML tools update workflow failed.
+          
+          **Workflow Run**: ${context.payload.repository.html_url}/actions/runs/${context.runId}
+          **Failure Time**: ${new Date().toISOString()}
+          
+          Please check the logs and fix any issues.
+          `;
+          
+          // Check if issue already exists
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: 'automation-failure',
+            state: 'open'
+          });
+          
+          if (issues.data.length === 0) {
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['automation-failure', 'bug']
+            });
+          }
